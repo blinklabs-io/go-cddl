@@ -1,0 +1,29 @@
+name: Docker CI
+
+on:
+  pull_request:
+    branches: ['main']
+    # XXX: is this actually helpful? we could remove it instead of having to remember to update it
+    paths: ['Dockerfile','cmd/**','docs/**','internal/**','go.*','.github/workflows/ci-docker.yml']
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: qemu
+        uses: docker/setup-qemu-action@v2
+      - uses: docker/setup-buildx-action@v2
+      - id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ghcr.io/${{ github.repository }}
+      - name: build
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          push: false
+          ### TODO: test multiple platforms
+          # platforms: linux/amd64,linux/arm64
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
